@@ -1,0 +1,69 @@
+{
+  "manifest_version": 3,
+  "name": "YoYo Affiliate Clipper",
+  "version": "1.1.0",
+  "description": "ดึงข้อมูลสินค้า Shopee/Lazada + แปลง Affiliate Link + บันทึกเข้า Admin",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "tabs"
+  ],
+  "host_permissions": [
+    "https://shopee.co.th/*",
+    "https://*.lazada.co.th/*",
+    "https://api.lazada.co.th/*",
+    "https://affiliate.shopee.co.th/*",
+    "https://adsense.lazada.co.th/*",
+    "https://api.yoyocomputer.com/*",
+    "http://localhost:8013/*",
+    "http://5.78.74.134:8014/*",
+    "http://localhost:8014/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["https://shopee.co.th/*"],
+      "js": ["content-scripts/shopee-scraper.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://*.lazada.co.th/*"],
+      "js": ["content-scripts/lazada-scraper.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://www.lazada.co.th/catalog/*"],
+      "js": ["content-scripts/lazada-search-scraper.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://affiliate.shopee.co.th/*"],
+      "js": ["content-scripts/affiliate-helper.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://adsense.lazada.co.th/*"],
+      "js": ["content-scripts/lazada-affiliate-helper.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "options_ui": {
+    "page": "options/options.html",
+    "open_in_tab": true
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

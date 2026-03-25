@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YoYo Affiliate Clipper</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Affiliate Clipper</h1>
+      <div class="header-badges">
+        <span id="source-badge" class="badge"></span>
+        <span id="site-badge" class="site-badge" title="คลิกเพื่อเปลี่ยน site"></span>
+      </div>
+    </header>
+
+    <!-- Tab Bar -->
+    <div class="tab-bar">
+      <button class="tab active" data-tab="clip">Clip Product</button>
+      <button class="tab" data-tab="queue">Clip Queue <span id="queue-count" class="tab-count"></span></button>
+      <button class="tab" data-tab="automatch">Auto Match</button>
+      <button id="btn-pin-queue" class="tab-pin" title="เปิด Queue แยกหน้าต่าง">📌</button>
+    </div>
+
+    <!-- ============ TAB 1: Clip Product ============ -->
+    <div id="tab-clip" class="tab-content active">
+      <div id="loading" class="loading">กำลังดึงข้อมูลสินค้า...</div>
+
+      <div id="not-supported" class="message-box" style="display:none">
+        เปิดหน้าสินค้า Shopee หรือ Lazada ก่อนกดปุ่ม
+      </div>
+
+      <!-- Active clip item indicator -->
+      <div id="clip-for-banner" class="clip-for-banner" style="display:none">
+        <span class="clip-for-label">Clip สำหรับ:</span>
+        <span id="clip-for-name" class="clip-for-name"></span>
+        <span id="clip-for-price" class="clip-for-price" style="display:none"></span>
+        <button id="clip-for-clear" class="clip-for-clear" title="ยกเลิก">&times;</button>
+      </div>
+
+      <div id="product-form" style="display:none">
+        <!-- Image: main + gallery side by side -->
+        <div class="image-section">
+          <div id="product-image-container" style="display:none">
+            <img id="product-image" src="" alt="Product">
+          </div>
+          <div id="image-gallery" class="image-gallery" style="display:none"></div>
+        </div>
+
+        <!-- Product Name -->
+        <div class="field">
+          <label>ชื่อสินค้า</label>
+          <input type="text" id="product-name" placeholder="ชื่อสินค้า">
+        </div>
+
+        <!-- Price + Category display -->
+        <div class="info-row">
+          <div class="price-row" id="price-display" style="display:none">
+            <span class="sale-price" id="display-sale-price"></span>
+            <span class="original-price" id="display-original-price"></span>
+            <span class="discount-badge" id="display-discount"></span>
+          </div>
+          <span class="category-badge" id="display-category" style="display:none"></span>
+        </div>
+
+        <!-- Hidden data fields -->
+        <input type="hidden" id="product-price">
+        <input type="hidden" id="product-original-price">
+        <input type="hidden" id="product-discount">
+        <input type="hidden" id="product-url">
+
+        <!-- Description -->
+        <div class="field">
+          <label>รายละเอียด</label>
+          <input type="text" id="product-description" placeholder="รายละเอียดสินค้า">
+        </div>
+
+        <!-- Convert button (visible) -->
+        <div class="actions">
+          <button id="btn-convert" class="btn btn-primary">🔗 แปลงลิงค์ + บันทึก</button>
+        </div>
+
+        <!-- Hidden: affiliate URL field + save button + result -->
+        <div style="display:none">
+          <input type="text" id="affiliate-url">
+          <button id="btn-save">💾</button>
+        </div>
+        <div id="save-result" class="result" style="display:none"></div>
+      </div>
+    </div>
+
+    <!-- ============ TAB 2: Clip Queue ============ -->
+    <div id="tab-queue" class="tab-content">
+      <!-- Auto-detect product banner -->
+      <div id="queue-product-bar" class="queue-product-bar" style="display:none">
+        <img id="qp-image" src="" class="qp-image">
+        <div class="qp-info">
+          <div id="qp-name" class="qp-name"></div>
+          <div id="qp-price" class="qp-price"></div>
+        </div>
+        <button id="qp-save" class="btn btn-primary qp-save">💾 บันทึก</button>
+      </div>
+      <div id="queue-loading" class="loading">กำลังโหลด...</div>
+      <div id="queue-empty" class="message-box" style="display:none">
+        ไม่มีรายการที่ต้อง Clip
+      </div>
+      <div id="queue-list" class="queue-list"></div>
+    </div>
+
+    <!-- ============ TAB 3: Auto Match ============ -->
+    <div id="tab-automatch" class="tab-content">
+      <div class="automatch-section">
+        <p class="automatch-desc">ค้นหา Lazada อัตโนมัติใน browser ของคุณ<br>
+        <small>เปิดหน้า Lazada search ทีละสินค้า → scrape → บันทึก affiliate link</small></p>
+
+        <div id="automatch-status" class="automatch-status" style="display:none"></div>
+
+        <div id="automatch-progress" style="display:none">
+          <div class="progress-bar-wrap">
+            <div id="automatch-bar" class="progress-bar" style="width:0%"></div>
+          </div>
+          <div id="automatch-stats" class="automatch-stats">
+            <span id="am-matched">0</span> matched &nbsp;·&nbsp;
+            <span id="am-failed">0</span> failed &nbsp;/&nbsp;
+            <span id="am-total">0</span> total
+          </div>
+          <div id="automatch-current" class="automatch-current"></div>
+        </div>
+
+        <div class="actions">
+          <button id="btn-start-automatch" class="btn btn-primary">▶ เริ่ม Auto Match</button>
+          <button id="btn-stop-automatch" class="btn btn-danger" style="display:none">⏹ หยุด</button>
+        </div>
+        <div id="automatch-result" class="result" style="display:none"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
