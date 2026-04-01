@@ -15,8 +15,8 @@ const SITES = {
     emoji: '💻',
   },
   junservice: {
-    adminUrl: 'http://5.78.74.134:8014',
-    adminKey: 'CHANGE_ME',   // ← ใส่ ADMIN_API_KEY จาก .env ของ beag14
+    adminUrl: 'http://5.78.74.134',   // nginx proxy → port 8014
+    adminKey: '26d68da4cb084b6e1a69b88210034ce77a4ab42fdd9673fb6c04ec5ea03de936',
     name: 'จันทร์เซอร์วิส',
     emoji: '🔧',
   },
@@ -131,9 +131,14 @@ async function _lazadaRequest(path, extraParams = {}) {
 
 /**
  * สร้าง affiliate tracking link จาก Lazada product URL
- * เรียกตรงจาก extension — ใช้ IP ของเรา ไม่ผ่าน server
+ * @param {string} productUrl - Lazada product URL
+ * @param {string} siteKey - 'junservice' | 'yoyocomputer' (ใช้เป็น subTrackingId)
  */
-async function generateAffiliateLinkDirect(productUrl) {
+async function generateAffiliateLinkDirect(productUrl, siteKey = 'yoyo') {
+  // Map siteKey → subTrackingId สั้นๆ (Lazada รองรับ max 32 chars)
+  const SUB_ID = { yoyocomputer: 'yoyo', junservice: 'jun' }
+  const subTrackingId = SUB_ID[siteKey] || siteKey
+
   try {
     // Extract product_id จาก URL (-i12345)
     const m = productUrl.match(/-i(\d+)/)
@@ -145,8 +150,10 @@ async function generateAffiliateLinkDirect(productUrl) {
       data = await _lazadaRequest('/marketing/getlink', {
         inputType: 'productId',
         inputValue: productId,
+        subTrackingId,
       })
-      const list = data?.data?.productBatchGetLinkInfoList || []
+      // Response path: data.result.data.productBatchGetLinkInfoList
+      const list = data?.result?.data?.productBatchGetLinkInfoList || []
       const link = list[0]?.regularPromotionLink
       if (link) return link
     }
@@ -155,8 +162,9 @@ async function generateAffiliateLinkDirect(productUrl) {
     data = await _lazadaRequest('/marketing/getlink', {
       inputType: 'url',
       inputValue: productUrl,
+      subTrackingId,
     })
-    const list = data?.data?.urlBatchGetLinkInfoList || []
+    const list = data?.result?.data?.urlBatchGetLinkInfoList || []
     return list[0]?.regularPromotionLink || null
 
   } catch (e) {
@@ -282,10 +290,12 @@ function scoreMatch(queryName, product) {
 }
 
 /**
- * สร้าง Lazada affiliate link — เรียกตรงจาก extension (IP เรา, ไม่ผ่าน server)
+ * สร้าง Lazada affiliate link พร้อม subTrackingId ตาม site
+ * @param {string} productUrl
+ * @param {string} siteKey - 'junservice' | 'yoyocomputer'
  */
-async function generateAffiliateLink(productUrl) {
-  return generateAffiliateLinkDirect(productUrl)
+async function generateAffiliateLink(productUrl, siteKey = 'yoyocomputer') {
+  return generateAffiliateLinkDirect(productUrl, siteKey)
 }
 
 /**
@@ -356,7 +366,7 @@ async function runAutoMatch(siteKey = 'yoyocomputer') {
       // เกณฑ์ขั้นต่ำ: match ต้องมีคะแนน >= 0.3 (คำตรงกันอย่างน้อย 30%)
       if (bestMatch && bestScore >= 0.3) {
         // สร้าง affiliate link
-        const affiliateUrl = await generateAffiliateLink(bestMatch.url)
+        const affiliateUrl = await generateAffiliateLink(bestMatch.url, siteKey)
         const saved = await updateProductLazada(product.id, bestMatch.url, affiliateUrl, siteKey)
         if (saved) matched++
         else failed++

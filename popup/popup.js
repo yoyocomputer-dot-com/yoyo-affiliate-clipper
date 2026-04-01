@@ -14,8 +14,33 @@ const SITES_DISPLAY = {
 }
 
 let currentProductData = null
-let currentSiteKey = 'yoyocomputer'   // detected site
+let currentSiteKey = 'yoyocomputer'   // detected site (overridden from storage on init)
 let clipQueueData = []
+
+// Load persisted site selection on startup — always render badge
+chrome.storage.local.get(['selectedSiteKey'], (res) => {
+  if (res.selectedSiteKey && SITES_DISPLAY[res.selectedSiteKey]) {
+    currentSiteKey = res.selectedSiteKey
+  }
+  updateSiteBadge(currentSiteKey)  // render เสมอ ไม่ว่าจะมี stored หรือไม่
+})
+
+// Admin API config per site (mirrors SITES in background.js)
+const ADMIN_SITES = {
+  yoyocomputer: {
+    adminUrl: 'https://api.yoyocomputer.com',
+    adminKey: '1b31ea9fc29fb79db5fcfb1acfeab36cfb1a0a1ce60e212715d66478573c8cd8',
+  },
+  junservice: {
+    adminUrl: 'http://5.78.74.134',   // nginx proxy → port 8014
+    adminKey: '26d68da4cb084b6e1a69b88210034ce77a4ab42fdd9673fb6c04ec5ea03de936',
+  },
+}
+// CONFIG proxy — resolves to current site's admin config dynamically
+const CONFIG = {
+  get adminUrl() { return (ADMIN_SITES[currentSiteKey] || ADMIN_SITES.yoyocomputer).adminUrl },
+  get adminKey() { return (ADMIN_SITES[currentSiteKey] || ADMIN_SITES.yoyocomputer).adminKey },
+}
 
 // ================================================================
 // Tab Switching
@@ -106,6 +131,10 @@ document.addEventListener('click', (e) => {
   const idx = sites.indexOf(currentSiteKey)
   currentSiteKey = sites[(idx + 1) % sites.length]
   updateSiteBadge(currentSiteKey)
+  // Persist selection
+  chrome.storage.local.set({ selectedSiteKey: currentSiteKey })
+  // Reload queue if queue tab is active
+  if ($('#tab-queue')?.classList.contains('active')) loadClipQueue()
 })
 
 async function showClipForBanner() {
